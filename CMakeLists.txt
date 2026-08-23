@@ -3,9 +3,7 @@ cmake_minimum_required(VERSION 3.20)
 set(PATCH_VERSION "1" CACHE INTERNAL "Patch version")
 set(PROJECT_VERSION 0.0.${PATCH_VERSION})
 
-project(log_reader VERSION ${PROJECT_VERSION})
-
-
+project(logreader VERSION ${PROJECT_VERSION})
 
 add_executable(logreader src/main.cpp)
 add_library(log_reader_lib
@@ -36,8 +34,6 @@ target_link_libraries(logreader
   PRIVATE ftxui::ftxui
   PRIVATE ${Boost_LIBRARIES}
 )
-
-
 
 if (MSVC)
     target_compile_options(logreader PRIVATE
