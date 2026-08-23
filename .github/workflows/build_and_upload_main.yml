@@ -1,0 +1,42 @@
+name: Build and upload artifacts
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install required
+        run: sh _tools/install_required.sh
+
+      - name: Configure (CMake)
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=install
+
+      - name: Build
+        run: cmake --build build -- -j$(nproc)
+
+      - name: Install to staging directory
+        run: cmake --install build --prefix install
+
+      - name: Create artifact archive
+        run: |
+          ARTIFACT_NAME="LogReader-${{ github.run_id }}"
+          tar -czf "${ARTIFACT_NAME}.tar.gz" -C install .
+          echo "Created ${ARTIFACT_NAME}.tar.gz"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LogReader-${{ github.run_id }}
+          path: LogReader-${{ github.run_id }}.tar.gz
+          retention-days: 7

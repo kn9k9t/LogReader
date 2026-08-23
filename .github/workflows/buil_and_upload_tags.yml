@@ -1,0 +1,75 @@
+name: Build, package, and release tag
+
+on:
+  push:
+    tags:
+      - '*'
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install required
+        run: sh _tools/install_required.sh
+
+      - name: Configure (CMake)
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=install
+
+      - name: Build
+        run: cmake --build build -- -j$(nproc)
+
+      - name: Install to staging directory
+        run: |
+          cmake --install build --prefix install
+
+      - name: Package (create .deb via CPack / cmake --target package)
+        run: |
+          cmake --build build --target package -- -j$(nproc)
+
+      - name: Find produced package
+        id: find_pkg
+        run: |
+          set -e
+          # Prefer .deb in build/ produced by CPack
+          PKG=$(ls build/*.deb 2>/dev/null || true)
+          if [ -z "$PKG" ]; then
+            PKG=$(find . -type f -name "*.deb" | head -n 1 || true)
+          fi
+          if [ -z "$PKG" ]; then
+            echo "::error::No .deb package was produced. Ensure CPack is configured in your CMakeLists (include(CPack) and CPACK_... variables)."
+            exit 1
+          fi
+          PKG_ABS=$(realpath "$PKG")
+          PKG_NAME=$(basename "$PKG_ABS")
+          echo "package_path=$PKG_ABS" >> $GITHUB_OUTPUT
+          echo "package_name=$PKG_NAME" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub release (on tag)
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        id: create_release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: ${{ github.ref_name }}
+          body: Release ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload package to release
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ steps.find_pkg.outputs.package_path }}
+          asset_name: ${{ github.repository }}-${{ github.ref_name }}.deb
+          asset_content_type: application/vnd.debian.binary-package
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
