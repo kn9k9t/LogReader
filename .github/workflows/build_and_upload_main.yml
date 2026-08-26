@@ -23,7 +23,7 @@ jobs:
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=install
 
       - name: Build solution and deb package
-        run: cmake --build build -- -j$(nproc) --target package
+        run: cmake --build build -j$(nproc) --target package
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
