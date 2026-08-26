@@ -22,21 +22,13 @@ jobs:
       - name: Configure (CMake)
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=install
 
-      - name: Build
-        run: cmake --build build -- -j$(nproc)
-
-      - name: Install to staging directory
-        run: cmake --install build --prefix install
-
-      - name: Create artifact archive
-        run: |
-          ARTIFACT_NAME="LogReader-${{ github.run_id }}"
-          tar -czf "${ARTIFACT_NAME}.tar.gz" -C install .
-          echo "Created ${ARTIFACT_NAME}.tar.gz"
+      - name: Build solution and deb package
+        run: cmake --build build -- -j$(nproc) --target package
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: LogReader-${{ github.run_id }}
-          path: LogReader-${{ github.run_id }}.tar.gz
+          name: logreader.deb
+          # ${{ github.run_id }}
+          path: logreader-0.0.1-Linux.deb
           retention-days: 7

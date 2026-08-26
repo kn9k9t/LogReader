@@ -47,7 +47,7 @@ private:
 
     auto dateTime = readUntilAndCutWithTrim(lineStr, '|');
     logRow._readTime = dateTime;
-    logRow._time = decodeTimestamp(dateTime);
+    //logRow._time = decodeTimestamp(dateTime);
     logRow._level = readUntilAndCutWithTrim(lineStr, '|');
     logRow._objectName = readUntilAndCutWithTrim(lineStr, '|');
     logRow._objectId = readUntilAndCutWithTrim(lineStr, '|');
@@ -58,19 +58,19 @@ private:
     return true;
   }
 
-  uint64_t decodeTimestamp(std::string_view dateTime)
-  {
-    std::chrono::sys_time<std::chrono::milliseconds> mSec;
-    std::string dateTimeStr(dateTime);
-    std::istringstream stream{dateTimeStr};
-    stream >> std::chrono::parse("%y%m%d %T", mSec);
-    if (stream.fail())
-      return 0;
+  // uint64_t decodeTimestamp(std::string_view dateTime)
+  // {
+  //   std::chrono::sys_time<std::chrono::milliseconds> mSec;
+  //   std::string dateTimeStr(dateTime);
+  //   std::istringstream stream{dateTimeStr};
+  //   stream >> std::chrono::parse("%y%m%d %T", mSec);
+  //   if (stream.fail())
+  //     return 0;
 
-    auto mSecVal = dateTime.substr(dateTime.rfind(':') + 1);
-    mSec += std::chrono::milliseconds{std::atoi(mSecVal.data())};
-    return mSec.time_since_epoch().count();
-  }
+  //   auto mSecVal = dateTime.substr(dateTime.rfind(':') + 1);
+  //   mSec += std::chrono::milliseconds{std::atoi(mSecVal.data())};
+  //   return mSec.time_since_epoch().count();
+  // }
 
   std::string_view readUntilAndCutWithTrim(std::string_view & str, char delim)
   {
