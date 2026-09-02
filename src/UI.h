@@ -21,13 +21,45 @@ public:
       if (boost::iequals(_row._level, "VRB"))
         colorType = Color::Blue;
 
-      auto element = hbox({
-        text(" "), text(_row._readTime)   | color(colorType), text(" "), separator(),
-        text(" "), text(_row._level)      | color(colorType), text(" "), separator(),
-        text(" "), text(_row._objectName) | color(colorType) | size(WIDTH, EQUAL, 10), text(" "), separator(),
-        text(" "), text(_row._objectId)   | color(colorType) | size(WIDTH, EQUAL, 10), text(" "), separator(),
-        text(" "), paragraph(_row._msg)   | color(colorType)
+      Elements mainData
+      {
+        text(" "), text(_row._readTime)    | color(colorType) | size(WIDTH, EQUAL, 19), text(" "), separator(),
+        text(" "), text(_row._level)       | color(colorType), text(" "), separator(),
+        text(" "), text(_row._objectName)  | color(colorType) | size(WIDTH, EQUAL, 10), text(" "), separator(),
+        text(" "), text(_row._objectId)    | color(colorType) | size(WIDTH, EQUAL, 10), text(" "), separator(),
+        text(" "), paragraph(_row._msg.front()) | color(colorType)
+      };
+      Elements extraRows;
+      for (size_t i = 1; i < _row._msg.size(); ++i)
+      {
+        extraRows.push_back(text(_row._msg[i]));
+      }
+
+      auto element = vbox({
+        hbox({mainData}),
+        vbox({extraRows})
       });
+
+      // if (_row._msg.size() == 1)
+      // {
+      //   auto element = hbox({
+      //     text(" "), text(_row._readTime)    | color(colorType), text(" "), separator(),
+      //     text(" "), text(_row._level)       | color(colorType), text(" "), separator(),
+      //     text(" "), text(_row._objectName)  | color(colorType) | size(WIDTH, EQUAL, 10), text(" "), separator(),
+      //     text(" "), text(_row._objectId)    | color(colorType) | size(WIDTH, EQUAL, 10), text(" "), separator(),
+      //     text(" "), text(_row._msg.front()) | color(colorType)
+      //   });
+      // }
+      // else
+      // {
+      //   auto element = hbox({
+      //     text(" "), text(_row._readTime)    | color(colorType), text(" "), separator(),
+      //     text(" "), text(_row._level)       | color(colorType), text(" "), separator(),
+      //     text(" "), text(_row._objectName)  | color(colorType) | size(WIDTH, EQUAL, 10), text(" "), separator(),
+      //     text(" "), text(_row._objectId)    | color(colorType) | size(WIDTH, EQUAL, 10), text(" "), separator(),
+      //     text(" "), text(_row._msg.front()) | color(colorType)
+      //   });
+      // }
 
       if (Focused()) 
       {
@@ -112,7 +144,7 @@ class UI
 public:
   UI() :
     _screen(ScreenInteractive::Fullscreen()),
-    _logList(std::make_shared<ScrollableContainer>())
+    _logList(Container::Vertical({}))
   {}
 
   void init(VecLogRow log)
@@ -237,13 +269,17 @@ public:
 
   void refreshLog(const VecLogRow & log)
   {
-    _logList->updateData(log);
+    _logList->DetachAllChildren();
+    for (const auto & row : log)
+    {
+      _logList->Add(Make<TableRowComponent>(row));
+    }
   }
 
 private:
   App _screen;
 
-  std::shared_ptr<ScrollableContainer> _logList;
+  Component _logList;
   Component _widgetObjectNameFilters;
   Component _widgetObjectIdFilters;
   Component _widgetLevelFilters;

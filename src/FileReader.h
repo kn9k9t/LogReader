@@ -7,6 +7,7 @@
 #include <sstream>
 #include <string_view>
 #include <chrono>
+#include <boost/algorithm/string.hpp>
 //-----------------------------------------------
 class LogHandler
 {
@@ -55,7 +56,8 @@ private:
         return false;
 
       auto & lastRow = _log.back();
-      lastRow._msg.append("\n" + std::string(lineStr));
+      lastRow._msg.push_back(line);
+      //lastRow._msg.append("\n" + std::string(lineStr));
       return true;
     }
 
@@ -66,9 +68,10 @@ private:
       return false;
     //logRow._time = decodeTimestamp(dateTime);
     logRow._level = readUntilAndCutWithTrim(lineStr, '|');
+    boost::to_upper(logRow._level);
     logRow._objectName = readUntilAndCutWithTrim(lineStr, '|');
     logRow._objectId = readUntilAndCutWithTrim(lineStr, '|');
-    logRow._msg = readUntilAndCutWithTrim(lineStr, '|');
+    logRow._msg.push_back(std::string(readUntilAndCutWithTrim(lineStr, '|')));
 
     _log.emplace_back(std::move(logRow));
 

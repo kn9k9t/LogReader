@@ -10,13 +10,13 @@ struct LogRow
   std::string _level;
   std::string _objectName;
   std::string _objectId;
-  std::string _msg;
+  std::vector<std::string> _msg;
 };
 typedef std::vector<LogRow> VecLogRow;
 //-----------------------------------------------
-std::ostream & operator<<(std::ostream & os, const LogRow & obj)
-{
-  os << obj._readTime << " | " << obj._level << " | " << obj._objectName << " | " << obj._objectId << " | " << obj._msg;
-  return os; 
-}
+// std::ostream & operator<<(std::ostream & os, const LogRow & obj)
+// {
+//   os << obj._readTime << " | " << obj._level << " | " << obj._objectName << " | " << obj._objectId << " | " << obj._msg;
+//   return os; 
+// }
 //-----------------------------------------------
