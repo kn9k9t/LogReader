@@ -43,12 +43,76 @@ private:
     LogRow _row;
 };
 //-----------------------------------------------
+class ScrollableContainer : public ComponentBase
+{
+public:
+  void updateData(const VecLogRow & data)
+  {
+    _data = data;
+  }
+
+  virtual Element OnRender() override 
+  {
+    Elements elements;
+    for (auto i = _beginPos; i < _beginPos + _drawedElements; ++i)
+    {
+      auto row = TableRowComponent(_data[i]);
+      elements.push_back(row.Render());
+    }
+    return vbox(std::move(elements));
+  }
+
+  virtual bool OnEvent(Event event) override
+  {
+    //TODO: Handle Down and Up events to redraw usable lines
+    if (event == Event::ArrowUp || event == Event::Character('k'))
+    {
+      if (_beginPos > 0) --_beginPos;
+      Redraw();
+      return true;
+    }
+    if (event == Event::ArrowDown || event == Event::Character('j'))
+    {
+      ++_beginPos;
+      if (_beginPos > _data.size() - _drawedElements - 1) 
+        _beginPos = _data.size() - _drawedElements - 1;
+      Redraw();
+      return true;
+    }
+    return false;
+  }
+
+  virtual Component ActiveChild() override {
+    if (children().empty()) {
+      return nullptr;
+    }
+
+    return children()[_beginPos];
+  }
+
+  virtual bool Focusable() const override { return true; }
+
+private:
+  size_t    _beginPos = 0;
+  size_t    _drawedElements = 50;
+  VecLogRow _data;
+
+  void Redraw()
+  {
+    DetachAllChildren();
+    for (auto i = _beginPos; i < _beginPos + _drawedElements; ++i)
+    {
+      Add(Make<TableRowComponent>(_data[i]));
+    }
+  }
+};
+//-----------------------------------------------
 class UI
 {
 public:
   UI() :
     _screen(ScreenInteractive::Fullscreen()),
-    _logList(Container::Vertical({}))
+    _logList(std::make_shared<ScrollableContainer>())
   {}
 
   void init(VecLogRow log)
@@ -173,17 +237,13 @@ public:
 
   void refreshLog(const VecLogRow & log)
   {
-    _logList->DetachAllChildren();
-    for (const auto & row : log)
-    {
-      _logList->Add(Make<TableRowComponent>(row));
-    }
+    _logList->updateData(log);
   }
 
 private:
   App _screen;
 
-  Component _logList;
+  std::shared_ptr<ScrollableContainer> _logList;
   Component _widgetObjectNameFilters;
   Component _widgetObjectIdFilters;
   Component _widgetLevelFilters;

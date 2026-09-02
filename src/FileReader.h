@@ -42,11 +42,28 @@ private:
 
   bool parseLine(const std::string & line)
   {
+    if (line.empty())
+      return false;
     std::string_view lineStr(line);
-    LogRow logRow;
+    trimLeft(lineStr);
+    if (lineStr.starts_with("***"))
+      return false;
 
+    if (lineStr.find("|") == std::string_view::npos || lineStr.starts_with("In") || lineStr.starts_with("Out"))
+    {
+      if (_log.empty())
+        return false;
+
+      auto & lastRow = _log.back();
+      lastRow._msg.append("\n" + std::string(lineStr));
+      return true;
+    }
+
+    LogRow logRow;
     auto dateTime = readUntilAndCutWithTrim(lineStr, '|');
     logRow._readTime = dateTime;
+    if (lineStr.starts_with("***"))
+      return false;
     //logRow._time = decodeTimestamp(dateTime);
     logRow._level = readUntilAndCutWithTrim(lineStr, '|');
     logRow._objectName = readUntilAndCutWithTrim(lineStr, '|');
