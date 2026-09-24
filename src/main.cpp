@@ -1,5 +1,4 @@
-#include "FileReader.h"
-#include "UI.h"
+#include "LogReader.h"
 //-----------------------------------------------
 int main(int argc, char ** argv)
 {
@@ -9,16 +8,8 @@ int main(int argc, char ** argv)
     return 1;
   }
 
-  LogHandler logHandler(argv[1]);
-  if (logHandler.readLog() == false)
-  {
-    std::cout << "Erorr log reading" << std::endl;
-    return 1;
-  }
+  LogReaderApp app(argv[1]);
+  app.run();
 
-  auto entries = logHandler.getLog();
-
-  UI ui;
-  ui.init(entries);
   return 0;
 }
