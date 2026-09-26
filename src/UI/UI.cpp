@@ -1,11 +1,12 @@
 #include "UI.h"
+#include "ScrollableContainer.h"
 //-----------------------------------------------
 UI::UI() :
   _screen(ScreenInteractive::Fullscreen()),
   _objectNamesContainer(Container::Vertical({})),
   _levelFilterContainer(Container::Vertical({})),
   _objectIdFilterContainer(Container::Vertical({})),
-  _logList(Container::Vertical({}))
+  _logList(Container::Scrollable({}))
 {}
 //-----------------------------------------------
 void UI::init()
@@ -106,7 +107,7 @@ void UI::init()
       {
         text("Press TAB to open filters"),
         separator(),
-        _logList->Render() | yflex | vscroll_indicator | yframe
+        _logList->Render() | yflex | yframe
       });
     }
   });

@@ -8,10 +8,13 @@ add_library(log_reader_lib
   LogHandler/LogHandler.cpp
   LogHandler/LogHandler.h
 
+  UI/ScrollableContainer.cpp
+  UI/ScrollableContainer.h
   UI/TableRowComp.cpp
   UI/TableRowComp.h
   UI/UI.cpp
   UI/UI.h
+
   LogReader.h
   LogReader.cpp
 )
