@@ -30,10 +30,14 @@ bool LogParser::parseLine(const std::string & line)
       return false;
 
     auto & lastRow = _log.back();
-    lastRow._msg.push_back(line);
+    LogRow row;
+    row = lastRow;
+    row._rawMsg = line;
+    _log.push_back(row);
     return true;
   }
   LogRow row;
+  row._rawMsg = line;
 
   auto dateTime = readUntilAndCutWithTrim(lineStr, '|');
   row._readTime = dateTime;
@@ -45,7 +49,6 @@ bool LogParser::parseLine(const std::string & line)
   boost::to_upper(row._level);
   row._objectName = readUntilAndCutWithTrim(lineStr, '|');
   row._objectId = readUntilAndCutWithTrim(lineStr, '|');
-  row._msg.push_back(std::string(readUntilAndCutWithTrim(lineStr, '|')));
 
   _log.push_back(row);
   //if (_log.empty() == false && _log.size() % BunchSize == 0)
