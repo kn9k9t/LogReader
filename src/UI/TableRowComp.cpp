@@ -6,14 +6,6 @@ TableRowComponent::TableRowComponent(const LogRow & row) :
 //-----------------------------------------------
 Element TableRowComponent::OnRender() 
 {
-  auto colorType = Color();
-  if (boost::iequals(_row._level, "ERR"))
-    colorType = Color::Red;
-  if (boost::iequals(_row._level, "WRN"))
-    colorType = Color::Yellow;
-  if (boost::iequals(_row._level, "VRB"))
-    colorType = Color::Blue;
-
   auto element = text(_row._rawMsg);
 
   if (Focused()) 

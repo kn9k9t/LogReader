@@ -43,23 +43,41 @@ void UI::init()
         continue;
       }
       if (std::string_view(objectId).starts_with(objectIdFilterValue))
+      {
         _objectIdFilterContainer->Add(Checkbox(objectId, &value, filtersCheckboxesOptions));
+      }
     }
   };
   auto objectIdFilterInput = Input(&objectIdFilterValue, inputOptions);
 
+  auto inverterMaker = [this](bool & val, auto & map)
+  {
+    auto option = CheckboxOption();
+    option.on_change = [&]()
+    {
+      for (auto & [name, value] : map)
+      {
+        value = val;
+      }
+      onFilterChanged();
+    };
+    return Checkbox("CHANGE ALL", &val, option);
+  };
+
+  bool levelInverterValue = true, objectNameInverterValue = true, objectIdInverterValue = true;
+  auto levelInverter = inverterMaker(levelInverterValue, _levelFilters);
+  auto objectNameInverter = inverterMaker(objectNameInverterValue, _objectNamesFilters);
+  auto objectIdInverter = inverterMaker(objectIdInverterValue, _objectIdsFilters);
+
+  _levelFilterContainer->TakeFocus();
   auto configMenu = Container::Horizontal(
   {
-    _levelFilterContainer,
-    _objectNamesContainer,
-    Container::Vertical({objectIdFilterInput, _objectIdFilterContainer}),
+    Container::Vertical({levelInverter, _levelFilterContainer}),
+    Container::Vertical({objectNameInverter, _objectNamesContainer}),
+    Container::Vertical({objectIdFilterInput, objectIdInverter, _objectIdFilterContainer}),
   });
 
   int activeLayer = 0;
-  _levelFilterContainer->TakeFocus();
-  _objectNamesContainer->TakeFocus();
-  _objectIdFilterContainer->TakeFocus();
-
   _logList->TakeFocus();
   auto layout = Container::Tab(
   {
@@ -95,9 +113,9 @@ void UI::init()
           separator(),
           hbox(
           {
-            vbox({text("Levels"), separator(), _levelFilterContainer->Render()}) | border,
-            vbox({text("Objects"), separator(), _objectNamesContainer->Render() | yframe | vscroll_indicator}) | border,
-            vbox({hbox({text("Objects IDs"), separator(), objectIdFilterInput->Render()}), separator(), _objectIdFilterContainer->Render() | yframe | vscroll_indicator}) | border
+            vbox({text("Levels"), levelInverter->Render(), separator(), _levelFilterContainer->Render()}) | border,
+            vbox({text("Objects"), objectNameInverter->Render(), separator(), _objectNamesContainer->Render() | yframe | vscroll_indicator}) | border,
+            vbox({hbox({text("Objects IDs"), separator(), objectIdFilterInput->Render()}), objectIdInverter->Render(), separator(), _objectIdFilterContainer->Render() | yframe | vscroll_indicator}) | border
           })
       });
     }
@@ -119,19 +137,18 @@ void UI::appendLog(VecLogRow log)
 {
   _screen.Post([&, log]()
   {
-    auto isLastElementFocused = _logList->ChildCount() > 0 ? _logList->ChildAt(_logList->ChildCount() - 1)->Focused() 
-                                                           : false;
+    _logData.insert(_logData.end(), log.begin(), log.end());
+
+    bool isLastElementFocused = false;
+    if (_logList->ChildCount() > 0)
+    {
+      _logList->ChildAt(_logList->ChildCount() - 1)->Focused();
+    }
+
+    updateFiltersData(log);
 
     for (const auto & row : log)
     {
-      _objectNamesFilters.insert(std::make_pair(row._objectName, true));
-
-      auto levelStr = row._level;
-      boost::to_upper(levelStr);
-      _levelFilters.insert(std::make_pair(levelStr, true));
-
-      _objectIdsFilters.insert(std::make_pair(row._objectId, true));
-
       _logList->Add(Make<TableRowComponent>(row));
     }
 
@@ -140,49 +157,66 @@ void UI::appendLog(VecLogRow log)
       _logList->ChildAt(_logList->ChildCount() - 1)->TakeFocus();
     }
 
-    _logData.insert(_logData.end(), log.begin(), log.end());
-
-    auto filtersCheckboxesOptions = CheckboxOption();
-    filtersCheckboxesOptions.on_change = [this](){ onFilterChanged(); };
-
-    _objectNamesContainer->DetachAllChildren();
-    for (auto & [objectName, value] : _objectNamesFilters)
-    {
-      _objectNamesContainer->Add(Checkbox(objectName, &value, filtersCheckboxesOptions));
-    }
-
-    _levelFilterContainer->DetachAllChildren();
-    for (auto & [level, value] : _levelFilters)
-    {
-      _levelFilterContainer->Add(Checkbox(level, &value, filtersCheckboxesOptions));
-    }
-
-    _objectIdFilterContainer->DetachAllChildren();
-    for (auto & [objectId, value] : _objectIdsFilters)
-    {
-      _objectIdFilterContainer->Add(Checkbox(objectId, &value, filtersCheckboxesOptions));
-    }
+    updateFiltersWidgets();
   });
   _screen.RequestAnimationFrame();
+}
+//-----------------------------------------------
+void UI::updateFiltersWidgets()
+{
+  auto filtersCheckboxesOptions = CheckboxOption();
+  filtersCheckboxesOptions.on_change = [this](){ onFilterChanged(); };
+
+  _objectNamesContainer->DetachAllChildren();
+  for (auto & [objectName, value] : _objectNamesFilters)
+  {
+    _objectNamesContainer->Add(Checkbox(objectName, &value, filtersCheckboxesOptions));
+  }
+
+  _levelFilterContainer->DetachAllChildren();
+  for (auto & [level, value] : _levelFilters)
+  {
+    _levelFilterContainer->Add(Checkbox(level, &value, filtersCheckboxesOptions));
+  }
+
+  _objectIdFilterContainer->DetachAllChildren();
+  for (auto & [objectId, value] : _objectIdsFilters)
+  {
+    _objectIdFilterContainer->Add(Checkbox(objectId.empty() ? "<empty>" : objectId, &value, filtersCheckboxesOptions));
+  }
+}
+//-----------------------------------------------
+void UI::updateFiltersData(const VecLogRow & appendedLog)
+{
+  for (const auto & row : appendedLog)
+  {
+    _objectNamesFilters.insert(std::make_pair(row._filterData->_objectName, true));
+
+    auto levelStr = row._filterData->_level;
+    boost::to_upper(levelStr);
+    _levelFilters.insert(std::make_pair(levelStr, true));
+
+    _objectIdsFilters.insert(std::make_pair(row._filterData->_objectId, true));
+  }
 }
 //-----------------------------------------------
 void UI::onFilterChanged()
 {
   auto shouldBeHided = [&](const auto & entry)
   {
-    auto it = _objectNamesFilters.find(entry._objectName);
+    auto it = _objectNamesFilters.find(entry._filterData->_objectName);
     if (it != _objectNamesFilters.end())
     {
       if (it->second == false) return true;
     }
 
-    it = _levelFilters.find(entry._level);
+    it = _levelFilters.find(entry._filterData->_level);
     if (it != _levelFilters.end())
     {
       if (it->second == false) return true;
     }
 
-    it = _objectIdsFilters.find(entry._objectId);
+    it = _objectIdsFilters.find(entry._filterData->_objectId);
     if (it != _objectIdsFilters.end())
     {
       if (it->second == false) return true;
@@ -198,5 +232,6 @@ void UI::onFilterChanged()
       continue;
     _logList->Add(Make<TableRowComponent>(row));
   }
+  _screen.RequestAnimationFrame();
 }
 //-----------------------------------------------
