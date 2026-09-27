@@ -29,26 +29,28 @@ bool LogParser::parseLine(const std::string & line)
     if (_log.empty())
       return false;
 
-    auto & lastRow = _log.back();
-    lastRow._msg.push_back(line);
+    LogRow row;
+    row._filterData = _log.back()._filterData;
+    row._rawMsg = line;
+    _log.push_back(row);
     return true;
   }
   LogRow row;
+  row._filterData = std::make_shared<LogRowFiltersData>();
+  row._rawMsg = line;
 
   auto dateTime = readUntilAndCutWithTrim(lineStr, '|');
-  row._readTime = dateTime;
+  row._filterData->_readTime = dateTime;
 
   if (lineStr.starts_with("***"))
     return false;
   
-  row._level = readUntilAndCutWithTrim(lineStr, '|');
-  boost::to_upper(row._level);
-  row._objectName = readUntilAndCutWithTrim(lineStr, '|');
-  row._objectId = readUntilAndCutWithTrim(lineStr, '|');
-  row._msg.push_back(std::string(readUntilAndCutWithTrim(lineStr, '|')));
+  row._filterData->_level = readUntilAndCutWithTrim(lineStr, '|');
+  boost::to_upper(row._filterData->_level);
+  row._filterData->_objectName = readUntilAndCutWithTrim(lineStr, '|');
+  row._filterData->_objectId = readUntilAndCutWithTrim(lineStr, '|');
 
   _log.push_back(row);
-  //if (_log.empty() == false && _log.size() % BunchSize == 0)
   if (_log.size() >= BunchSize)
   {
     _user.onSomeLogWasRead(std::move(_log));

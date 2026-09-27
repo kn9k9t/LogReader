@@ -30,6 +30,9 @@ private:
 
   VecLogRow  _logData;
 
+  void updateFiltersWidgets();
+  void updateFiltersData(const VecLogRow & appendedLog);
+
   void onFilterChanged();
 };
 //-----------------------------------------------

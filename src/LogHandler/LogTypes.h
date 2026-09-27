@@ -2,14 +2,20 @@
 //-----------------------------------------------
 #include <string>
 #include <vector>
+#include <memory>
 //-----------------------------------------------
-struct LogRow
+struct LogRowFiltersData
 {
   std::string _readTime;
   std::string _level;
   std::string _objectName;
   std::string _objectId;
-  std::vector<std::string> _msg;
+};
+//-----------------------------------------------
+struct LogRow
+{
+  std::shared_ptr<LogRowFiltersData> _filterData;
+  std::string                        _rawMsg;
 };
 typedef std::vector<LogRow> VecLogRow;
 //-----------------------------------------------
