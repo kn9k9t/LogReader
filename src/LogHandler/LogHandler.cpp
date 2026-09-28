@@ -35,7 +35,7 @@ void LogHandler::watchLogChangesAndReadIfNeeded()
       readLog();
     }
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(2500));
+    std::this_thread::sleep_for(std::chrono::milliseconds(250));
   }
 }
 //-----------------------------------------------
@@ -63,6 +63,7 @@ bool LogHandler::readLog()
     parser.parseLine(line);
   }
 
+  logFile.close();
   return true;
 }
 //-----------------------------------------------
