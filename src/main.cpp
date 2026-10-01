@@ -12,9 +12,10 @@ int main(int argc, char ** argv)
   std::cout << "agrv[0] : " << argv[0] << std::endl;
   std::cout << "agrv[1] : " << argv[1] << std::endl;
 
+  std::filesystem::path fullPath;
   try
   {
-    auto fullPath = std::filesystem::canonical(argv[1]);
+    fullPath = std::filesystem::canonical(argv[1]);
     std::cout << "Canonical path for " << argv[1] << " is " << fullPath << std::endl;
   }
   catch (const std::exception& ex)
@@ -24,7 +25,7 @@ int main(int argc, char ** argv)
     exit(1);
   }
 
-  LogReaderApp app(argv[1]);
+  LogReaderApp app(fullPath.generic_string());
   app.run();
 
   return 0;

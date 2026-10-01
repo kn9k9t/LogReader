@@ -28,7 +28,6 @@ void LogHandler::stop()
 void LogHandler::watchLogChangesAndReadIfNeeded()
 {
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
-  readLog();
   while (_running)
   {
     if (isLogChanged())
