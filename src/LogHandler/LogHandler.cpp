@@ -14,8 +14,7 @@ LogHandler::~LogHandler()
 void LogHandler::run()
 {
   _running = true;
-  //_thread = std::thread(&LogHandler::watchLogChangesAndReadIfNeeded, this);
-  _thread = std::thread([&]{ watchLogChangesAndReadIfNeeded(); });
+  _thread = std::thread(&LogHandler::watchLogChangesAndReadIfNeeded, this);
 }
 //-----------------------------------------------
 void LogHandler::stop()
@@ -50,7 +49,7 @@ bool LogHandler::readLog()
   _lastWriteTime = std::filesystem::last_write_time(_path);
   
   std::fstream logFile;
-  logFile.open(_path);
+  logFile.open(_path, std::ios_base::in);
   if (!logFile.is_open())
   {
     std::cout << "Can't open file: " << _path;

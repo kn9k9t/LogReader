@@ -196,7 +196,8 @@ void UI::updateFiltersData(const VecLogRow & appendedLog)
     boost::to_upper(levelStr);
     _levelFilters.insert(std::make_pair(levelStr, true));
 
-    _objectIdsFilters.insert(std::make_pair(row._filterData->_objectId, true));
+    if (row._filterData->_objectId.empty() == false)
+      _objectIdsFilters.insert(std::make_pair(row._filterData->_objectId, true));
   }
 }
 //-----------------------------------------------
